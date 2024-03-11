@@ -291,11 +291,36 @@ class ServidorUnitTest {
 		}
 	}
 	
-	@Test
-	@DisplayName("(3 puntos) Petición \"cifrar\"")
-	void test17() {
-		fail("Not yet implemented");
-	}
+	 @Test
+	    @DisplayName("(3 puntos) Petición \"cifrar\"")
+	    void test17() {
+	        try (Socket socket = new Socket("localhost",9000)){
+	            socket.setSoTimeout(10000);
+	            
+	            DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+	            out.writeUTF("cifrar:mi_alias");
+	            // Generamos un texto mayor a 256 bytes que no sea múltiplo de 256
+	            StringBuilder texto = new StringBuilder();
+	            for (int i = 0; i < 400; i++) {
+	                texto.append("A");
+	            }
+	            out.writeUTF(texto.toString());
+	            out.writeUTF("FIN"); // Señal de finalización de datos
+	            
+	            String respuesta;
+	            StringBuilder cifrado = new StringBuilder();
+	            try (DataInputStream in = new DataInputStream(socket.getInputStream())){
+	                while ((respuesta = in.readUTF()).startsWith("OK:")) {
+	                    cifrado.append(respuesta.substring(3));
+	                }
+	            }
+	            assertEquals("FIN:CIFRADO", respuesta);
+	            // Verificar que el texto cifrado no esté vacío
+	            assert(cifrado.length() > 0);
+	        } catch (IOException e) {
+	            fail(e.getLocalizedMessage());
+	        }
+	    }
 	
 	@Test
 	@DisplayName("(0,2 puntos) Petición \"cifrar\" sin alias (A)")
